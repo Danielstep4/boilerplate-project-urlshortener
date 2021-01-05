@@ -10,7 +10,6 @@ mongoose.connect(process.env.DB_URI, {useNewUrlParser: true, useUnifiedTopology:
 const Url = mongoose.model('Url', { url: String, num: Number })
 // Basic Configuration
 const port = process.env.PORT || 3000;
-
 app.use(cors());
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -23,9 +22,12 @@ app.get('/', function(req, res) {
 
 // Your first API endpoint
 app.post('/api/shorturl/new', (req, res) => {
-    dns.lookup(req.body.url, (err) => {
-        if(err) throw err
-        else {
+  const givenUrl = new URL(req.body.url).hostname
+    dns.lookup(givenUrl, (err) => {
+        if(err) {
+            console.log(err)
+            res.json({error: 'Invalid Hostname'})
+        }else {
             const newUrl = new Url({ url: req.body.url, num: +process.env.COUNT })
             newUrl.save().then(() => {
                 console.log('URL Saved in the db')
@@ -36,7 +38,6 @@ app.post('/api/shorturl/new', (req, res) => {
                 process.env.COUNT++
               }).catch(err => {
                   console.log(err)
-                  res.json({error: 'Invalid Hostname'})
               })
         }
     })
@@ -56,3 +57,4 @@ app.get('/api/shorturl/:id', function(req, res) {
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
 });
+
