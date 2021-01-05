@@ -22,25 +22,29 @@ app.get('/', function(req, res) {
 
 // Your first API endpoint
 app.post('/api/shorturl/new', (req, res) => {
-  const givenUrl = new URL(req.body.url).hostname
-    dns.lookup(givenUrl, (err) => {
-        if(err) {
-            console.log(err)
-            res.json({error: 'Invalid Hostname'})
-        }else {
-            const newUrl = new Url({ url: req.body.url, num: +process.env.COUNT })
-            newUrl.save().then(() => {
-                console.log('URL Saved in the db')
-                res.json({  
-                  original_url: req.body.url,
-                  short_url: +process.env.COUNT
-              })
-                process.env.COUNT++
-              }).catch(err => {
-                  console.log(err)
-              })
-        }
-    })
+  if(req.body.url.match('https://') || req.body.url.match('http://')) {
+    const givenUrl = new URL(req.body.url).hostname;
+      dns.lookup(givenUrl, (err) => {
+          if(err) {
+              console.log(err)
+              res.json({error: 'invalid url'})
+          }else {
+              const newUrl = new Url({ url: req.body.url, num: +process.env.COUNT })
+              newUrl.save().then(() => {
+                  console.log('URL Saved in the db')
+                  res.json({  
+                    original_url: req.body.url,
+                    short_url: +process.env.COUNT
+                })
+                  process.env.COUNT++
+                }).catch(err => {
+                    console.log(err)
+                })
+          }
+      })
+  }else {
+    res.json({error: 'invalid url'})
+  }
 });
 app.get('/api/shorturl/:id', function(req, res) {
   Url.find({ num: req.params.id }, (err, url) => {
